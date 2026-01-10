@@ -10,6 +10,16 @@ load_dotenv()
 def json_deserializer(msg):
     return json.loads(msg.decode('utf8'))
 
+def get_alert_theme(status, url):
+    if status == 0:
+        return "🚫 CONNECTION FAILURE", 15158332  # Red
+    elif 500 <= status <= 599:
+        return f"🔥 SERVER DOWN: ({status}) Error", 15158332  # Red
+    elif 400 <= status <= 499:
+        return f"⚠️ CONFIG ISSUE: ({status}) Not Found", 16776960  # Yellow
+    else:
+        return f"ℹ️ STATUS UPDATE: ({status})", 3447003  # Blue
+
 def send_discord_alert(data):
     readable_time = datetime.fromtimestamp(data['timestamp']).strftime('%d-%m-%Y %H:%M:%S')
     url_val = str(data.get('url', 'Unknown'))
@@ -18,18 +28,7 @@ def send_discord_alert(data):
     status_val = data['status_code']
     display_status = "UNREACHABLE" if status_val == 0 else str(status_val)
 
-    if status_val == 0:
-        title = f"🚫 CONNECTION FAILURE: {url_val}"
-        color = 15158332  # Red
-    elif 500 <= status_val <= 599:
-        title = f"🔥 SERVER DOWN: {status_val} Error"
-        color = 15158332  # Red
-    elif 400 <= status_val <= 499:
-        title = f"⚠️ CONFIG ISSUE: {status_val} Not Found"
-        color = 16776960  # Yellow
-    else:
-        title = f"ℹ️ STATUS UPDATE: {status_val}"
-        color = 3447003  # Blue
+    title, color = get_alert_theme(status_val, url_val)
 
     embed_content = {
         "title": title,
