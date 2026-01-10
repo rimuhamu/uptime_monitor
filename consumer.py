@@ -1,15 +1,17 @@
 from confluent_kafka import Consumer
+import os
 import json
+from dotenv import load_dotenv
 
-import config
+load_dotenv()
 
-conf = {'bootstrap.servers':config.BOOTSTRAP_SERVERS,
-        'group.id': 'health_monitor_group',
+conf = {'bootstrap.servers':os.getenv('KAFKA_BOOTSTRAP_SERVERS'),
+        'group.id': os.getenv('KAFKA_GROUP_ID'),
         'auto.offset.reset': 'earliest',
         }
 
 consumer = Consumer(conf)
-consumer.subscribe(['website_health'])
+consumer.subscribe([os.getenv('KAFKA_TOPIC_NAME')])
 
 try:
     while True:
