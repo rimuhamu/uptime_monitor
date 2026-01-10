@@ -7,17 +7,25 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+def json_deserializer(msg):
+    return json.loads(msg.decode('utf8'))
+
 def send_discord_alert(data):
     readable_time = datetime.fromtimestamp(data['timestamp']).strftime('%d-%m-%Y %H:%M:%S')
+    url_val = str(data.get('url', 'Unknown'))
+    latency_val = str(data.get('latency', '0'))
+    error_val = str(data.get('error') or 'None')
+    status_val = data['status_code']
+    display_status = "UNREACHABLE" if status_val == 0 else str(status_val)
     embed_content = {
         "title": "🔥 WEBSITE DOWN ALERT 🔥",
         "description": f"The monitor detected a failure.",
         "color": 15158332,
         "fields": [
-            {"name": "Target URL", "value": data['url'], "inline": False},
-            {"name": "Status Code", "value": data['status_code'], "inline": False},
-            {"name": "Latency", "value": data['latency'], "inline": False},
-            {"name": "Error Message", "value": data['error'], "inline": True},
+            {"name": "Target URL", "value": url_val, "inline": False},
+            {"name": "Status Code", "value": display_status, "inline": True},
+            {"name": "Latency", "value": latency_val, "inline": False},
+            {"name": "Error Message", "value": error_val, "inline": True},
             {"name": "Timestamp", "value": readable_time, "inline": False},
         ]
     }
@@ -44,6 +52,7 @@ def main():
 
     consumer = Consumer(conf)
     consumer.subscribe([os.getenv('KAFKA_TOPIC_NAME')])
+    print(f"Monitoring started on topic: {os.getenv('KAFKA_TOPIC_NAME')}")
 
     try:
         while True:
@@ -53,14 +62,21 @@ def main():
             if msg.error():
                 print("Consumer error: {}".format(msg.error()))
                 continue
+            try:
+                data = json_deserializer(msg.value())
+                status_code = data['status_code']
+                url = data['url']
 
-            data = json.loads(msg.value().decode('utf-8'))
-            if data['status_code'] != 200:
-                print(f"CRITICAL: {data['url']} is DOWN with status {data['status_code']}!")
-                send_discord_alert(data)
-            else:
-                print(f"OK: {data['url']} is UP with status {data['status_code']}!")
-
+                is_down = (status_code == 0 or status_code >= 400)
+                if is_down:
+                    print(f"ALERT: {url} (Status code: {status_code})")
+                    send_discord_alert(data)
+                else:
+                    print(f"OK: {url} (Status code: {status_code})")
+            except Exception as e:
+                print(f"Error consuming message: {e}")
+    except KeyboardInterrupt:
+        print("Shutting down consumer...")
     finally:
         consumer.close()
 
