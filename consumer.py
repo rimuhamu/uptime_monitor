@@ -17,10 +17,24 @@ def send_discord_alert(data):
     error_val = str(data.get('error') or 'None')
     status_val = data['status_code']
     display_status = "UNREACHABLE" if status_val == 0 else str(status_val)
+
+    if status_val == 0:
+        title = f"🚫 CONNECTION FAILURE: {url_val}"
+        color = 15158332  # Red
+    elif 500 <= status_val <= 599:
+        title = f"🔥 SERVER DOWN: {status_val} Error"
+        color = 15158332  # Red
+    elif 400 <= status_val <= 499:
+        title = f"⚠️ CONFIG ISSUE: {status_val} Not Found"
+        color = 16776960  # Yellow
+    else:
+        title = f"ℹ️ STATUS UPDATE: {status_val}"
+        color = 3447003  # Blue
+
     embed_content = {
-        "title": "🔥 WEBSITE DOWN ALERT 🔥",
+        "title": title,
         "description": f"The monitor detected a failure.",
-        "color": 15158332,
+        "color": color,
         "fields": [
             {"name": "Target URL", "value": url_val, "inline": False},
             {"name": "Status Code", "value": display_status, "inline": True},
