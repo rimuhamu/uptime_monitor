@@ -8,15 +8,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def send_discord_alert(data):
-    readable_time = datetime.fromtimestamp(data['time']).strftime('%d-%m-%Y %H:%M:%S')
+    readable_time = datetime.fromtimestamp(data['timestamp']).strftime('%d-%m-%Y %H:%M:%S')
     embed_content = {
         "title": "🔥 WEBSITE DOWN ALERT 🔥",
         "description": f"The monitor detected a failure.",
         "color": 15158332,
         "fields": [
             {"name": "Target URL", "value": data['url'], "inline": False},
-            {"name": "Status Code", "value": data['status'], "inline": False},
-            #{"name": "Error Message", "value": data['error_message', 'None'], "inline": True},
+            {"name": "Status Code", "value": data['status_code'], "inline": False},
+            {"name": "Latency", "value": data['latency'], "inline": False},
+            {"name": "Error Message", "value": data['error'], "inline": True},
             {"name": "Timestamp", "value": readable_time, "inline": False},
         ]
     }
@@ -54,11 +55,11 @@ def main():
                 continue
 
             data = json.loads(msg.value().decode('utf-8'))
-            if data['status'] != 200:
-                print(f"CRITICAL: {data['url']} is DOWN with status {data['status']}!")
+            if data['status_code'] != 200:
+                print(f"CRITICAL: {data['url']} is DOWN with status {data['status_code']}!")
                 send_discord_alert(data)
             else:
-                print(f"OK: {data['url']} is UP with status {data['status']}!")
+                print(f"OK: {data['url']} is UP with status {data['status_code']}!")
 
     finally:
         consumer.close()
