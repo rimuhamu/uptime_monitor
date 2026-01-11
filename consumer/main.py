@@ -1,14 +1,17 @@
 import requests
+import sys
+import os
 from datetime import datetime
 from confluent_kafka import Consumer
 import json
-from config import KAFKA_BOOTSTRAP_SERVERS, KAFKA_TOPIC_NAME, DISCORD_WEBHOOK_URL, KAFKA_GROUP_ID
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from config import KAFKA_BOOTSTRAP_SERVERS, KAFKA_TOPIC_NAME, DISCORD_WEBHOOK_URL, KAFKA_GROUP_ID
 
 def json_deserializer(msg):
     return json.loads(msg.decode('utf8'))
 
-def get_alert_theme(status, url):
+def get_alert_theme(status):
     if status == 0:
         return "🚫 CONNECTION FAILURE", 15158332  # Red
     elif 500 <= status <= 599:
@@ -26,7 +29,7 @@ def send_discord_alert(data):
     status_val = data['status_code']
     display_status = "UNREACHABLE" if status_val == 0 else str(status_val)
 
-    title, color = get_alert_theme(status_val, url_val)
+    title, color = get_alert_theme(status_val)
 
     embed_content = {
         "title": title,

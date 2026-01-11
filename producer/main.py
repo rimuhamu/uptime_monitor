@@ -2,6 +2,10 @@ from confluent_kafka import Producer
 import json
 import requests
 import time
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from config import KAFKA_BOOTSTRAP_SERVERS, SITES_TO_MONITOR, KAFKA_TOPIC_NAME, SLEEP_TIME
 
 

@@ -3,7 +3,7 @@ from datetime import timedelta
 
 import requests
 
-from producer import get_website_status
+from producer.main import get_website_status
 from unittest.mock import patch, Mock
 
 @patch('requests.get')

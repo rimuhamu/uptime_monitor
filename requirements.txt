@@ -2,4 +2,4 @@ confluent-kafka
 requests
 python-dotenv
 pytest
-psycopg2-binary
+sqlalchemy

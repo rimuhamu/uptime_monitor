@@ -35,12 +35,12 @@ DISCORD_WEBHOOK_URL=your_webhook_url
 
 Run the producer (monitors websites):
 ```bash
-python producer.py
+python producer/main.py
 ```
 
 Run the consumer (sends alerts):
 ```bash
-python consumer.py
+python consumer/main.py
 ```
 
 ## Testing
