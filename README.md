@@ -58,7 +58,68 @@ uptime_monitor/
 └── requirements.txt         # Python dependencies
 ```
 
-## Setup
+## Quick Start (Docker)
+
+### 1. Clone and Setup
+
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd uptime_monitor
+
+# Create environment file
+cp .env.example .env
+```
+
+### 2. Configure Discord Webhook
+
+Edit `.env` and add your Discord webhook URL:
+
+```bash
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/your_webhook_url_here
+```
+
+Get a webhook URL from Discord: Server Settings → Integrations → Webhooks → New Webhook
+
+### 3. Start All Services
+
+```bash
+# Build and start all containers
+docker-compose up -d --build
+
+# View logs (all services)
+docker-compose logs -f
+
+# View specific service logs
+docker-compose logs -f producer
+docker-compose logs -f consumer-alerts
+docker-compose logs -f consumer-db
+```
+
+### 4. Verify Everything Works
+
+```bash
+# Check container status
+docker-compose ps
+
+# Check database for saved records
+docker exec -it postgres_db psql -U admin -d uptime_db -c "SELECT * FROM website_stats ORDER BY created_at DESC LIMIT 10;"
+
+# View Kafka topics
+docker exec -it kafka kafka-topics --bootstrap-server localhost:29092 --list
+```
+
+### 5. Stop Services
+
+```bash
+# Stop all containers
+docker-compose down
+
+# Stop and remove volumes (clean slate)
+docker-compose down -v
+```
+
+## Manual Setup (Local Development)
 
 1. Install dependencies:
 ```bash
@@ -67,7 +128,7 @@ pip install -r requirements.txt
 
 2. Start Kafka Broker and PostgreSQL container in the background:
 ```bash
-docker-compose up -d
+docker-compose up -d kafka postgres
 ```
 
 3. Configure environment variables in `.env`:
@@ -75,17 +136,15 @@ docker-compose up -d
 # Kafka Config
 KAFKA_BOOTSTRAP_SERVERS=localhost:9092
 KAFKA_TOPIC_NAME=website-monitor
-KAFKA_GROUP_ID=monitor-consumer
-SITES_TO_MONITOR=https://google.com,https://github.com
+SITES_TO_MONITOR=https://google.com,https://github.com,https://httpbin.org/status/404,https://httpbin.org/status/503
 SLEEP_TIME=60
 DISCORD_WEBHOOK_URL=your_webhook_url
 
 # Database Config
-DB_HOST=localhost
+DB_HOST=localhost:5432
 DB_NAME=uptime_db
 DB_USER=admin
 DB_PASS=password123
-DB_PORT=5432
 ```
 
 ## Usage
@@ -105,8 +164,34 @@ Run the DB consumer (saves events to the database):
 python consumer/consumer_db.py
 ```
 
+## Configuration
+
+### Monitored Websites
+
+Edit `docker-compose.yml` to customize monitored sites:
+
+```yaml
+producer:
+  environment:
+    SITES_TO_MONITOR: https://google.com,https://github.com,https://yoursite.com
+    SLEEP_TIME: 60  # Check interval in seconds
+```
+
+### Consumer Groups
+
+Two independent consumer groups receive ALL messages:
+- `alert_consumer_group` - Sends Discord notifications
+- `db_consumer_group` - Saves to PostgreSQL
+
 ## Testing
 
 ```bash
-pytest -m pytest
+# Run all tests
+pytest
+
+# Run with verbose output
+pytest -v
+
+# Run specific test file
+pytest tests/test_monitor.py
 ```
