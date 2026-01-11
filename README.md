@@ -54,7 +54,9 @@ uptime_monitor/
 ├── config.py                # Centralized config loader
 ├── database.py              # SQLAlchemy DB setup & models
 ├── utils.py                 # Shared Kafka & Parsing utilities
-├── docker-compose.yml       # Kafka + Postgres Infrastructure
+├── Dockerfile               # Application container image
+├── docker-compose.yml       # Full stack orchestration
+├── .env.example             # Environment variables template
 └── requirements.txt         # Python dependencies
 ```
 
