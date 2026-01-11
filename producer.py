@@ -1,11 +1,9 @@
 from confluent_kafka import Producer
-import os
 import json
 import requests
 import time
-from dotenv import load_dotenv
+from config import KAFKA_BOOTSTRAP_SERVERS, SITES_TO_MONITOR, KAFKA_TOPIC_NAME, SLEEP_TIME
 
-load_dotenv()
 
 def json_serializer(data):
     return json.dumps(data).encode('utf-8')
@@ -37,19 +35,19 @@ def get_website_status(url):
         }
 def main():
     conf = {
-        'bootstrap.servers': os.getenv('KAFKA_BOOTSTRAP_SERVERS'),
+        'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
     }
 
     producer = Producer(conf)
     try:
         while True:
-            for url in os.getenv('SITES_TO_MONITOR').split(','):
+            for url in SITES_TO_MONITOR.split(','):
                 data = get_website_status(url)
                 serialized_data = json_serializer(data)
-                producer.produce(os.getenv('KAFKA_TOPIC_NAME'), value=serialized_data, callback=delivery_report)
+                producer.produce(KAFKA_TOPIC_NAME, value=serialized_data, callback=delivery_report)
 
             producer.flush()
-            time.sleep(int(os.getenv('SLEEP_TIME')))
+            time.sleep(int(SLEEP_TIME))
     except KeyboardInterrupt:
         print("Shutting down...")
     finally:

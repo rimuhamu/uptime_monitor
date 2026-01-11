@@ -1,11 +1,9 @@
 import requests
 from datetime import datetime
 from confluent_kafka import Consumer
-import os
 import json
-from dotenv import load_dotenv
+from config import KAFKA_BOOTSTRAP_SERVERS, KAFKA_TOPIC_NAME, DISCORD_WEBHOOK_URL, KAFKA_GROUP_ID
 
-load_dotenv()
 
 def json_deserializer(msg):
     return json.loads(msg.decode('utf8'))
@@ -49,7 +47,7 @@ def send_discord_alert(data):
     }
 
     try:
-        response = requests.post(os.getenv("DISCORD_WEBHOOK_URL"), json=payload)
+        response = requests.post(DISCORD_WEBHOOK_URL, json=payload)
         if response.status_code == 204:
             print("Discord alert sent successfully")
         else:
@@ -58,14 +56,14 @@ def send_discord_alert(data):
         print(f"Error sending alert: {e}")
 
 def main():
-    conf = {'bootstrap.servers':os.getenv('KAFKA_BOOTSTRAP_SERVERS'),
-            'group.id': os.getenv('KAFKA_GROUP_ID'),
+    conf = {'bootstrap.servers':KAFKA_BOOTSTRAP_SERVERS,
+            'group.id': KAFKA_GROUP_ID,
             'auto.offset.reset': 'latest',
             }
 
     consumer = Consumer(conf)
-    consumer.subscribe([os.getenv('KAFKA_TOPIC_NAME')])
-    print(f"Monitoring started on topic: {os.getenv('KAFKA_TOPIC_NAME')}")
+    consumer.subscribe([KAFKA_TOPIC_NAME])
+    print(f"Monitoring started on topic: {KAFKA_TOPIC_NAME}")
 
     try:
         while True:
