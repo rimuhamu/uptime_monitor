@@ -24,6 +24,11 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
 
       CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server kafka:29092 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
 
   postgres:
     image: postgres:15
@@ -36,3 +41,58 @@ services:
       - "5432:5432"
     volumes:
       - ./pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  producer:
+    build: .
+    container_name: uptime_producer
+    command: python producer/main.py
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_TOPIC_NAME: website_health
+      SITES_TO_MONITOR: https://google.com,https://httpbin.org/status/404,https://httpbin.org/status/503,https://this-domain-does-not-exist-12345.com
+      SLEEP_TIME: 60
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  consumer-alerts:
+    build: .
+    container_name: uptime_consumer_alerts
+    command: python consumer/main.py
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_TOPIC_NAME: website_health
+      KAFKA_GROUP_ID: health_check_group
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  consumer-db:
+    build: .
+    container_name: uptime_consumer_db
+    command: python consumer/consumer_db.py
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_TOPIC_NAME: website_health
+      KAFKA_GROUP_ID: health_check_group
+      DB_HOST: postgres
+      DB_NAME: uptime_db
+      DB_USER: admin
+      DB_PASS: password123
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pg_data:
