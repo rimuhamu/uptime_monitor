@@ -29,7 +29,9 @@ def save_to_db(data):
 def main():
     init_db()
 
-    consumer = create_kafka_consumer(group_id=KAFKA_GROUP_ID)
+    group_id = os.getenv('KAFKA_GROUP_ID', 'db_consumer_group')
+
+    consumer = create_kafka_consumer(group_id=group_id)
 
     if not consumer: return
 

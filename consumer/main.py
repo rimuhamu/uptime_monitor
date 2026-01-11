@@ -56,7 +56,9 @@ def send_discord_alert(data):
         print(f"Error sending alert: {e}")
 
 def main():
-    consumer = create_kafka_consumer(group_id=KAFKA_GROUP_ID)
+    group_id = os.getenv('KAFKA_GROUP_ID', 'alert_consumer_group')
+
+    consumer = create_kafka_consumer(group_id=group_id)
 
     if not consumer: return
 
