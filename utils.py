@@ -2,13 +2,13 @@ import json
 
 from confluent_kafka import Consumer
 
-from config import KAFKA_BOOTSTRAP_SERVERS, KAFKA_GROUP_ID, KAFKA_TOPIC_NAME
+from config import KAFKA_BOOTSTRAP_SERVERS, KAFKA_TOPIC_NAME
 
 
 def create_kafka_consumer(group_id):
     conf = {
         'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
-        'group.id': KAFKA_GROUP_ID,
+        'group.id': group_id,
         'auto.offset.reset': 'latest'
     }
 

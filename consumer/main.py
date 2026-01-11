@@ -2,12 +2,9 @@ import requests
 import sys
 import os
 from datetime import datetime
-from confluent_kafka import Consumer
-import json
-
-from utils import create_kafka_consumer, parse_message
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from utils import create_kafka_consumer, parse_message
 from config import DISCORD_WEBHOOK_URL, KAFKA_GROUP_ID
 
 
@@ -68,8 +65,12 @@ def main():
             msg = consumer.poll(1.0)
 
             data = parse_message(msg)
-            status_code = data['status_code']
-            url = data['url']
+
+            if data is None:
+                continue
+
+            status_code = data.get('status_code')
+            url = data.get('url')
 
             is_down = (status_code == 0 or status_code >= 400)
             if is_down:

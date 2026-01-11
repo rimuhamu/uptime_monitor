@@ -1,5 +1,7 @@
-import json
+import sys
+import os
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from config import  KAFKA_GROUP_ID
 from database import SessionLocal, init_db, WebsiteStats
 from utils import create_kafka_consumer, parse_message
